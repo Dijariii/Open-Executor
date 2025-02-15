@@ -1,0 +1,32 @@
+<button onclick="loginWithOAuth()">Login with Discord</button>
+
+<script>
+    function loginWithOAuth() {
+        const clientId = '1336314005932740668';
+        const redirectUri = 'https://yourdomain.com/callback';  // The URI where the OAuth provider will redirect
+        const scope = 'identify';  // Example: 'identify' scope for Discord login
+        
+        const authorizationUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}`;
+        window.location.href = authorizationUrl;  // Redirect to the OAuth2 authorization page
+    }
+</script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');  // Extract authorization code
+
+    if (code) {
+        fetch('https://yourbackend.com/exchange_token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Access Token:', data.access_token);
+            // Now you can use the access token to make API calls on behalf of the user
+        })
+        .catch(error => {
+            console.error('Error exchanging code:', error);
+        });
+    }
+</script>
