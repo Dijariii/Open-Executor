@@ -1,13 +1,13 @@
 <div align="center">
-    <img width="64" alt="drawdb logo" src="./src/assets/icon-dark.png">
+    <img width="64" alt="Open Executor Softworks logo" src="./src/assets/icon-dark.png">
     <h1>Open Executor</h1>
 </div>
 
 <h3 align="center">Free, simple, Roblox executor (Open-Source UI).</h3>
 
 <div align="center" style="margin-bottom:12px;">
-    <a href="https://drawdb.app/" style="display: flex; align-items: center;">
-        <img src="https://img.shields.io/badge/Start%20building-grey" alt="drawDB"/>
+    <a href="https://open-executor-web.vercel.app/" style="display: flex; align-items: center;">
+        <img src="https://img.shields.io/badge/Start%20building-grey" alt="OpenSource"/>
     </a>
     <a href="https://discord.gg/gCWBfGRRNZ" style="display: flex; align-items: center;">
         <img src="https://img.shields.io/discord/1196658537208758412.svg?label=Join%20the%20Discord&logo=discord" alt="Discord"/>
@@ -26,29 +26,21 @@ Open Source Softworks provides a robust Executor UI with a open source code, mea
 
 ## Getting Started
 
-### Local Development
+### Downloading
 
 ```bash
-git clone https://github.com/drawdb-io/drawdb
-cd drawdb
-npm install
-npm run dev
+# To run the Open-Exexutor, please download the latest version and run the Bootstrapper. If its automatically closing; delete version.txt
 ```
 
-### Build
+### Using
 
 ```bash
-git clone https://github.com/drawdb-io/drawdb
-cd drawdb
-npm install
-npm run build
+# The use can be very wide, you can use it to kickstart your own executor, implement your own api. Or even learn from the code to improve your own Executor!
 ```
 
-### Docker Build
+### Thanks for using
 
 ```bash
-docker build -t drawdb .
-docker run -p 3000:80 drawdb
+# Thanks for using, please join the discord and support us!
 ```
 
-Set up the [server](https://github.com/drawdb-io/drawdb-server) and environment variables according to `.env.sample` for the survey and bug report forms.
