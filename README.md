@@ -1,6 +1,6 @@
 <div align="center">
     <img width="64" alt="drawdb logo" src="./src/assets/icon-dark.png">
-    <h1>drawDB</h1>
+    <h1>Open Executor</h1>
 </div>
 
 <h3 align="center">Free, simple, and intuitive database schema editor and SQL generator.</h3>
