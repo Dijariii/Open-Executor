@@ -20,7 +20,7 @@
     </a>
 </div>
 
-<h3 align="center"><img width="700" style="border-radius:5px;" alt="demo" src="drawdb.png"></h3>
+<h3 align="center"><img width="700" style="border-radius:5px;" alt="demo" src="./src/assets/image.png"></h3>
 
 Open Source Softworks provides a robust Executor UI with a open source code, meaning you can fork it, or use it on your own server. Or even you can use it for personal use! Open Exexutor has a built in scriptHub powered by RoScripts. A awesome and modern home tab, and a sleek monaco.
 ---------------------------------------------------------------------------------------------------
