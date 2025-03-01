@@ -30,7 +30,7 @@ Open Source Softworks provides a robust Executor UI with a open source code, mea
 
 </div>
 
-![hazard-v2](https://user-images.githubusercontent.com/96620548/20012863-acb433e6-551e-4f7a-861c-09cfd570fa7b.png)
+![hazard-v2](./src/assets/image.png)
 
 <hr style="border-radius: 2%; margin-top: 60px; margin-bottom: 60px;" noshade="" size="20" width="100%">
 
