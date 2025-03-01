@@ -1,0 +1,263 @@
+using System.IO.Compression;
+using System.Runtime.InteropServices;
+using Newtonsoft.Json.Linq;
+
+class Program
+{
+
+    private static extern IntPtr GetConsoleWindow();
+    const string InfoUrl = "https://pastebin.com/raw/3cdzkmFZ";  // Your info URL
+    const string RbxVersionUrl = "https://clientsettings.roblox.com/v2/client-version/WindowsPlayer/channel/live";  // Roblox version URL
+
+    static async Task Main() // Main Function
+    {
+       
+        await SetConsoleTitleFromJson();
+        PrintAsciiArt();
+        Console.WriteLine("\n[+] Fetching version info...");
+
+        string info = await HttpGet(InfoUrl);
+        var infoJson = JObject.Parse(info);
+
+        if (infoJson["Status"]?.ToString() == "False")
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("[+] Open Executor is currently down");
+            Thread.Sleep(5000);
+            return;
+        }
+
+        string localVersion = File.Exists("version.txt") ? File.ReadAllText("version.txt") : string.Empty;
+        Console.WriteLine("[+] Current Open Executor version: " + infoJson["SoftwareVersion"]);
+        Console.WriteLine("[+] Current Open Executor file version: " + (string.IsNullOrEmpty(localVersion) ? "none" : localVersion));
+        Thread.Sleep(250);
+
+        if (localVersion != infoJson["SoftwareVersion"]?.ToString())
+        {
+            Console.WriteLine("[+] New version detected!");
+            if (infoJson.ContainsKey("Changelog"))
+            {
+                Console.WriteLine("[+] Changelog for new update below\n");
+                Console.WriteLine(infoJson["Changelog"]);
+            }
+            Console.WriteLine("\n[+] Downloading Open Executor...");
+
+            // Get the download URL directly from the JSON response
+            string downloadUrl = infoJson["SoftwareUrl"]?.ToString();
+            if (string.IsNullOrEmpty(downloadUrl))
+            {
+                Console.WriteLine("[+] Error: 'SoftwareUrl' key not found or is empty in the JSON response.");
+                return;
+            }
+
+            // Download the file
+            await DownloadFile(downloadUrl, "OpenExecutor.zip"); // Change download name
+            File.WriteAllText("version.txt", infoJson["SoftwareVersion"]?.ToString());
+            Console.WriteLine("[+] Open Executor successfully installed! Closing in 5 seconds.");
+            Thread.Sleep(5000);
+        }
+    }
+
+    static async Task SetConsoleTitleFromJson() // Console Title
+    {
+        string response = await HttpGet(RbxVersionUrl);
+        if (!string.IsNullOrEmpty(response))
+        {
+            var data = JObject.Parse(response);
+            Console.Title = "Open Executor | " + data["clientVersionUpload"];
+        }
+        else
+        {
+            Console.WriteLine("[+] You are already up to date. Closing in 5 seconds.");
+            Thread.Sleep(5000);
+        }
+    }
+
+    static async Task<string> HttpGet(string url)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            try
+            {
+                return await client.GetStringAsync(url);
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+    }
+
+    static async Task DownloadFile(string url, string outputPath) // Download file and extract it
+    {
+        using (HttpClientHandler handler = new HttpClientHandler() { AllowAutoRedirect = true })
+        using (HttpClient client = new HttpClient(handler))
+        {
+            try
+            {
+                // Make the request
+                HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var contentType = response.Content.Headers.ContentType?.MediaType;
+
+                    // Check if the content is a zip file or binary file (octet-stream)
+                    if (contentType != "application/zip" && contentType != "application/octet-stream")
+                    {
+                        string content = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine("[+] Error: The file downloaded is not a zip file. Content type: " + contentType);
+                        Console.WriteLine("[+] Response Body: " + content.Substring(0, Math.Min(500, content.Length)));
+                        return;
+                    }
+
+                    // Get the total size of the file
+                    long totalSize = response.Content.Headers.ContentLength.GetValueOrDefault();
+
+                    // Download the file data in chunks
+                    byte[] buffer = new byte[8192]; // Buffer size of 8KB
+                    long totalBytesRead = 0;
+
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    using (var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        int bytesRead;
+                        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        {
+                            await fileStream.WriteAsync(buffer, 0, bytesRead);
+                            totalBytesRead += bytesRead;
+
+                            // Calculate progress
+                            double progress = (double)totalBytesRead / totalSize;
+
+                            // Display the progress bar
+                            int barLength = 50;  // Length of the loading bar
+                            int progressBlocks = (int)(progress * barLength);
+                            string progressBar = new string('=', progressBlocks) + new string(' ', barLength - progressBlocks);
+                            Console.Write($"\r[{progressBar}] {progress * 100:0.00}%");
+                        }
+                    }
+
+                    Console.WriteLine("\n[+] Download successful.");
+
+                    // Extract the ZIP file
+                    string extractPath = Path.Combine(Directory.GetCurrentDirectory(), "OpenExecutor"); // You can specify your desired extraction folder
+                    if (Directory.Exists(extractPath))
+                    {
+                        Directory.Delete(extractPath, true);
+                    }
+                    Directory.CreateDirectory(extractPath);
+
+                    // Extract the downloaded ZIP file
+                    await ExtractZipWithProgress(outputPath, extractPath);
+                    Console.WriteLine("[+] Extraction successful");
+
+                    // After extraction, delete the ZIP file
+                    File.Delete(outputPath);
+                }
+                else
+                {
+                    Console.WriteLine($"[+] Failed to download file. Status code: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+                    Console.WriteLine("[+] Software URL from Pastebin: " + url);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[+] Failed to download or extract file: " + ex.Message);
+                Console.WriteLine("[+] Direct Download:" + url);
+            }
+        }
+    }
+
+    static async Task ExtractZipWithProgress(string zipFilePath, string extractPath)
+    {
+        Console.WriteLine("[+] Extracting Open Executor...");
+        try
+        {
+            // Ensure the extractPath is not null or empty before proceeding
+            if (string.IsNullOrEmpty(extractPath))
+            {
+                Console.WriteLine("[+] Error: The extraction path is null or empty.");
+                return;
+            }
+
+            // Open the ZIP file
+            using (ZipArchive archive = ZipFile.OpenRead(zipFilePath))
+            {
+                // Calculate the total size of all the entries in the zip archive
+                long totalSize = archive.Entries.Sum(e => e.Length);
+                long totalBytesExtracted = 0;
+
+                int barLength = 50;  // Length of the progress bar
+
+                foreach (var entry in archive.Entries)
+                {
+                    // Determine the full destination path where the file will be extracted
+                    string destinationPath = Path.Combine(extractPath, entry.FullName);
+                    string directoryPath = Path.GetDirectoryName(destinationPath);
+
+                    if (!string.IsNullOrEmpty(directoryPath))
+                    {
+                        try
+                        {
+                            Directory.CreateDirectory(directoryPath);
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Open the entry stream and the destination file stream to write the extracted content
+                    try
+                    {
+                        using (var entryStream = entry.Open())
+                        using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write))
+                        {
+                            byte[] buffer = new byte[8192]; // Buffer for reading data in chunks
+                            int bytesRead;
+
+                            // Read from the entry stream and write to the file stream
+                            while ((bytesRead = await entryStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                            {
+                                await fileStream.WriteAsync(buffer, 0, bytesRead); // Write the data chunk to the file
+                                totalBytesExtracted += bytesRead;
+
+                                // Calculate progress
+                                double progress = (double)totalBytesExtracted / totalSize;
+
+                                // Display the progress bar
+                                int progressBlocks = (int)(progress * barLength);
+                                string progressBar = new string('=', progressBlocks) + new string(' ', barLength - progressBlocks);
+                                Console.Write($"\r[{progressBar}] {progress * 100:0.00}%");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+
+                Console.WriteLine("\n[+] Extraction completed successfully!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("\n[+] Error during extraction: ");
+        }
+    }
+
+
+
+    static void PrintAsciiArt()
+    {
+        Console.ForegroundColor = ConsoleColor.DarkRed;
+        Console.WriteLine(@"  ___                     _____                     _             ");
+        Console.WriteLine(@" / _ \ _ __   ___ _ __   | ____|_  _____  ___ _   _| |_ ___  _ __ ");
+        Console.WriteLine(@"| | | | '_ \ / _ \ '_ \  |  _| \ \/ / _ \/ __| | | | __/ _ \| '__|");
+        Console.WriteLine(@"| |_| | |_) |  __/ | | | | |___ >  <  __/ (__| |_| | || (_) | |   ");
+        Console.WriteLine(@" \___/| .__/ \___|_| |_| |_____/_/\_\___|\___|\__,_|\__\___/|_|   ");
+        Console.WriteLine(@"      |_|                                                        ");
+        Console.ForegroundColor = ConsoleColor.White;
+    }
+}
