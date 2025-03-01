@@ -44,10 +44,12 @@ Open Source Softworks provides a robust Executor UI with a open source code, mea
 
 ## Getting Started
 
+### **🥇Firstly, download the latest version in the release tab!
+
 ### Downloading
 
 ```bash
-# To run the Open-Exexutor, please download the latest version and run the Bootstrapper. If its automatically closing; delete version.txt
+# To run the Open-Exexutor, please download the latest version and run the Bootstrapper. If its automatically closing; delete version.txt.
 ```
 
 ### Using
