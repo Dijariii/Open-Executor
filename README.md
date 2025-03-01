@@ -1,5 +1,5 @@
 <div align="center">
-    <img width="64" alt="Open Executor Softworks logo" src="./src/assets/icon-dark.png">
+    <img width="64" alt="Open Executor Softworks logo" src="./src/assets/dark-icon.jpg">
     <h1>Open Executor</h1>
 </div>
 
